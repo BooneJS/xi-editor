@@ -25,19 +25,6 @@ use view::View;
 
 use ::send;
 
-macro_rules! print_err {
-    ($($arg:tt)*) => (
-        {
-            use std::io::prelude::*;
-            if let Err(e) = write!(&mut ::std::io::stderr(), "{}\n", format_args!($($arg)*)) {
-                panic!("Failed to write to stderr.\
-                    \nOriginal error output: {}\
-                    \nSecondary error writing to stderr: {}", format!($($arg)*), e);
-            }
-        }
-    )
-}
-
 const MODIFIER_SHIFT: u64 = 2;
 
 pub struct Editor {
@@ -205,6 +192,11 @@ impl Editor {
                     self.view.rewrap(&self.text, 72);
                     self.dirty = true;
                 }
+                "\u{F705}" => {  // F2, but using for debugging
+                    print_err!("setting fg spans");
+                    self.view.set_test_fg_spans();
+                    self.dirty = true;
+                }
                 _ => self.insert(chars)
             }
         }
@@ -231,12 +223,9 @@ impl Editor {
             match File::create(&path) {
                 Ok(mut f) => {
                     for chunk in self.text.iter_chunks(0, self.text.len()) {
-                        match f.write_all(chunk.as_bytes()) {
-                            Err(e) => {
-                                print_err!("write error {}", e);
-                                break;
-                            },
-                            _ => ()
+                        if let Err(e) = f.write_all(chunk.as_bytes()) {
+                            print_err!("write error {}", e);
+                            break;
                         }
                     }
                 },

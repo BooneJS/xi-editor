@@ -12,20 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: figure out how not to duplcate this
-macro_rules! print_err {
-    ($($arg:tt)*) => (
-        {
-            use std::io::prelude::*;
-            if let Err(e) = write!(&mut ::std::io::stderr(), "{}\n", format_args!($($arg)*)) {
-                panic!("Failed to write to stderr.\
-                    \nOriginal error output: {}\
-                    \nSecondary error writing to stderr: {}", format!($($arg)*), e);
-            }
-        }
-    )
-}
-
 use std::cmp::{min,max};
 
 use serde_json::Value;
@@ -35,6 +21,8 @@ use xi_rope::rope::{Rope, LinesMetric, RopeInfo};
 use xi_rope::delta::{Delta};
 use xi_rope::tree::Cursor;
 use xi_rope::breaks::{Breaks, BreaksMetric, BreaksBaseMetric};
+use xi_rope::interval::Interval;
+use xi_rope::spans::{Spans, SpansBuilder};
 
 use linewrap;
 
@@ -46,6 +34,7 @@ pub struct View {
     first_line: usize,  // vertical scroll position
     height: usize,  // height of visible portion
     breaks: Option<Breaks>,
+    fg_spans: Spans<u32>,
     cols: usize,
 }
 
@@ -57,6 +46,7 @@ impl View {
             first_line: 0,
             height: 10,
             breaks: None,
+            fg_spans: Spans::default(),
             cols: 0,
         }
     }
@@ -135,6 +125,7 @@ impl View {
             // TODO: strip trailing line end
             let l_len = l.len();
             line_builder = line_builder.push(l);
+            line_builder = self.render_spans(line_builder, start_pos, pos);
             if line_num >= sel_min_line && line_num <= sel_max_line && self.sel_start != self.sel_end {
                 let sel_start_ix = if line_num == sel_min_line {
                     self.sel_min() - self.offset_of_line(text, line_num)
@@ -171,6 +162,18 @@ impl View {
                         builder.push("cursor").push(0)));
         }
         builder.unwrap()
+    }
+
+    pub fn render_spans(&self, mut builder: ArrayBuilder, start: usize, end: usize) -> ArrayBuilder {
+        let fg_spans = self.fg_spans.subseq(Interval::new_closed_open(start, end));
+        for (iv, fg) in fg_spans.iter() {
+            builder = builder.push_array(|builder|
+                builder.push("fg")
+                    .push(iv.start())
+                    .push(iv.end())
+                    .push(fg));
+        }
+        builder
     }
 
     pub fn render(&self, text: &Rope, scroll_to: Option<usize>) -> Value {
@@ -304,5 +307,11 @@ impl View {
 
     pub fn reset_breaks(&mut self) {
         self.breaks = None;
+    }
+
+    pub fn set_test_fg_spans(&mut self) {
+        let mut sb = SpansBuilder::new(15);
+        sb.add_span(Interval::new_closed_open(5, 10), 0xffc00000);
+        self.fg_spans = sb.build();
     }
 }

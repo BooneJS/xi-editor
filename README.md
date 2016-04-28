@@ -1,5 +1,7 @@
 # xi editor
 
+<img src="icons/xi-editor.png" alt="Xi Editor" width="256" height="256"/>
+
 The xi editor project is an attempt to build a high quality text editor,
 using modern software engineering techniques. It is initially built for
 Mac OS X, using Cocoa for the user interface, but other targets are planned.
@@ -25,17 +27,29 @@ Screenshot (will need to be updated as syntax coloring and UI polish is added):
 
 ## Getting started
 
-You need Xcode 7 and [Rust](https://www.rust-lang.org/). You should have
-`cargo` in your path.
+You need Xcode 7 and [Rust](https://www.rust-lang.org/) (version 1.8 is
+recommended). You should have `cargo` in your path.
 
 ```
-> git clone <this repo>
+> git clone https://github.com/google/xi-editor
 > cd xi-editor
 > xcodebuild
 > open build/Release/XiEditor.app
 ```
 
 Or `open XiEditor.xcodeproj` and hit the Run button.
+
+### Building the core
+
+If you’re not on a Mac, you can build just the core:
+
+```
+> cd rust
+> cargo build
+```
+
+See the [xi_glium](https://github.com/potocpav/xi_glium) project for an
+experimental front-end in Rust.
 
 ## Design decisions
 
@@ -99,8 +113,8 @@ The main author is Raph Levien.
 ## Contributions
 
 We gladly accept contributions via GitHub pull requests, as long as the author
-has signed the Google Contributor License. Please see CONTRIBUTIONS.md for
-more details.
+has signed the Google Contributor License. Please see
+[CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
 ### Disclaimer
 

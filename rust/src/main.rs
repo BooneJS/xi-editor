@@ -19,6 +19,9 @@ use std::io;
 use std::io::{Read, Write};
 use serde_json::Value;
 
+#[macro_use]
+mod macros;
+
 mod editor;
 mod view;
 mod linewrap;
@@ -28,19 +31,6 @@ use editor::Editor;
 extern crate xi_rope;
 extern crate xi_unicode;
 
-macro_rules! print_err {
-    ($($arg:tt)*) => (
-        {
-            use std::io::prelude::*;
-            if let Err(e) = write!(&mut ::std::io::stderr(), "{}\n", format_args!($($arg)*)) {
-                panic!("Failed to write to stderr.\
-                    \nOriginal error output: {}\
-                    \nSecondary error writing to stderr: {}", format!($($arg)*), e);
-            }
-        }
-    )
-}
-
 // TODO: should provide result
 pub fn send(v: &Value) {
     let mut s = serde_json::to_string(v).unwrap();
@@ -48,8 +38,8 @@ pub fn send(v: &Value) {
     //print_err!("from core: {}", s);
     let size = s.len();
     let mut sizebuf = [0; 8];
-    for i in 0..8 {
-        sizebuf[i] = (((size as u64) >> (i * 8)) & 0xff) as u8;
+    for (i, item) in sizebuf.iter_mut().enumerate() {
+        *item = (((size as u64) >> (i * 8)) & 0xff) as u8;
     }
     let stdout = io::stdout();
     let mut stdout_handle = stdout.lock();
